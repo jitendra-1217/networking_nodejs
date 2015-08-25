@@ -7,9 +7,12 @@ var handleConnection = function(conn) {
 
     console.log('[Client] %s', remoteAddress);
 
+    conn.setEncoding('utf8');
+
     var onConnData = function(data) {
 
         console.log('[Client] %s, [Data] %j', remoteAddress, data);
+        conn.write('[Server] Recieved your data\n');
     };
 
     var onConnClose = function() {
