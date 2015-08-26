@@ -1,5 +1,7 @@
 
 var net = require('net');
+var fs = require('fs');
+
 var server = net.createServer();
 
 var handleConnection = function(conn) {
@@ -9,6 +11,21 @@ var handleConnection = function(conn) {
 
     conn.setEncoding('utf8');
 
+    /* This happens asyn but puts data read from file in buffer until completion. Not optimal in cases. */
+    fs.readFile(__dirname + '/sample.txt', function(err, data) {
+        if (err) {
+            console.log('[Server Error] Error in reading file.');
+            return;
+        }
+        conn.write('[Server] ' + data);
+    });
+
+    /*
+        Pipe data to client - A different approach for optimizing large file serve.
+     */
+    var readStream = fs.createReadStream(__dirname + '/sample.txt');
+    readStream.pipe(conn);  // This closes the tcp connection once data sending is done.
+
     var onConnData = function(data) {
 
         console.log('[Client] %s, [Data] %j', remoteAddress, data);
@@ -17,7 +34,7 @@ var handleConnection = function(conn) {
 
     var onConnClose = function() {
 
-        console.log('[Client] %s', remoteAddress);
+        console.log('[Client] %s Closed', remoteAddress);
     };
 
     var onConnError = function(err) {
@@ -33,7 +50,7 @@ var handleConnection = function(conn) {
 };
 
 server.on('connection', handleConnection);
-server.listen(4001, function() {
+server.listen(4005, function() {
 
     console.log('[Server] %j', server.address());
 });
